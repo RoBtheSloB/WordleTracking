@@ -1,0 +1,69 @@
+---
+title: "Wordle Warriors"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r libraries ,include=FALSE}
+library(flexdashboard)
+library(htmlwidgets)
+library(jsonlite)
+library(gridExtra)
+library(readr)
+library(ggthemes)
+library(scales)
+library(zoo)
+library(knitr)
+library(kableExtra)
+library(RColorBrewer)
+library(shiny)
+library(DT)
+library(rsconnect)
+library(httr)
+library(readxl)
+library(tidyverse)
+
+options(dplyr.summarise.inform=F)
+
+```
+
+
+```{r include=FALSE}
+
+WordleData <- read_xlsx("Wordle Tracking.xlsx" ,sheet = "Results")
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
