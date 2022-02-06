@@ -1,0 +1,13 @@
+name: wordle
+title: Wordle
+username:
+account: robdaslob
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5592760
+bundleId: 5550006
+url: https://robdaslob.shinyapps.io/wordle/
+when: 1644186135.1711
+lastSyncTime: 1644186135.1711
+asMultiple: FALSE
+asStatic: FALSE
