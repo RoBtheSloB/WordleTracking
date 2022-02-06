@@ -85,8 +85,7 @@ Column {data-width=450}
 renderPlot({
   WordleData %>% 
     # filter(Player %in% input$PlayerInput) %>% 
-    # mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput) ,as.numeric(NumberofAttempts))) %>%
-    mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,7.5 ,as.numeric(NumberofAttempts))) %>%
+    mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput) ,as.numeric(NumberofAttempts))) %>%
     group_by(Player) %>% 
     summarise(AvgAttempts = mean(AttemptsClean ,na.rm = TRUE)) %>% 
     arrange(AvgAttempts) %>% 
