@@ -31,28 +31,273 @@ options(dplyr.summarise.inform=F)
 ```
 
 
+Leaderboard 
+=======================================================================
+
+Column {data-width=200 .sidebar}
+-----------------------------------------------------------------------
+
+### Filters
+
 ```{r include=FALSE}
 
 WordleData <- read_xlsx("Wordle Tracking.xlsx" ,sheet = "Results")
 
+colnames(WordleData) <- str_remove_all(colnames(WordleData) ,pattern = "\\s")
 
+PlayerVector <- WordleData %>%
+  select(Player) %>% 
+  unique() %>% 
+  pull()
+
+
+```
+
+
+```{r}
+
+selectInput("XInput"
+            ,"Select a value for X:"
+            ,choices = c(7, 7.5 ,8 ,8.5 ,9)
+            ,selected = 7.5
+            )
+
+# selectInput("PlayerInput"
+#             ,"Select players:"
+#             ,choices = PlayerVector
+#             ,selected = PlayerVector
+#             ,multiple = TRUE
+#             )
+
+
+
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+
+### Avg # of Attempts
+
+```{r}
+
+
+renderPlot({
+  WordleData %>% 
+    # filter(Player %in% input$PlayerInput) %>% 
+    mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput) ,as.numeric(NumberofAttempts))) %>%
+    group_by(Player) %>% 
+    summarise(AvgAttempts = mean(AttemptsClean ,na.rm = TRUE)) %>% 
+    arrange(AvgAttempts) %>% 
+    ungroup() %>% 
+    ggplot(aes(x = reorder(Player ,AvgAttempts ,function(x) {-x}) ,y = AvgAttempts ,fill = AvgAttempts)) +
+    geom_col() +
+    coord_flip() +
+    labs(x = "Player") +
+    scale_fill_gradientn(colors = c("darkgreen" ,"palegreen" ,"tomato1" ,"darkred")
+                         ,breaks = c(4 ,4.4 ,4.8)) +    
+    theme_fivethirtyeight()
+})
 
 
 
 ```
 
 
+### Number Incorrect
+
+```{r}
+
+
+renderPlot({
+  WordleData %>% 
+    # filter(Player %in% input$PlayerInput) %>% 
+    mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput) ,as.numeric(NumberofAttempts))) %>%
+    group_by(Player) %>% 
+    summarise(IncorrectAttempts = sum(NumberofAttempts == "X" ,na.rm = TRUE)) %>% 
+    arrange(IncorrectAttempts) %>% 
+    ungroup() %>% 
+    ggplot(aes(x = reorder(Player ,IncorrectAttempts ,function(x) {x}) ,y = IncorrectAttempts ,fill = IncorrectAttempts)) +
+    geom_col() +
+    coord_flip() +
+    scale_y_continuous(breaks = pretty_breaks()) +
+    labs(x = "Player") +
+    scale_fill_gradientn(colors = c("darkgreen" ,"palegreen" ,"tomato1" ,"darkred")) +    
+    theme_fivethirtyeight()
+})
 
 
 
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total Wordles
+
+```{r}
 
 
 
+valueBox(WordleData %>% 
+           summarise(n_distinct(WordleId))
+         ,icon = "fas fa-pen"
+         
+         ## Other Icon Options:
+         # ,icon = "fab fa-delicious"
+         # ,icon = "fas fa-grip-horizontal"
+         )
+
+```
+
+
+### Wordles Completed
+
+```{r}
+
+
+renderPlot({
+  WordleData %>% 
+    # filter(Player %in% input$PlayerInput) %>% 
+    mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput) ,as.numeric(NumberofAttempts))) %>%
+    group_by(Player) %>% 
+    summarise(TotalAttempts = sum(!is.na(AttemptsClean))) %>% 
+    arrange(TotalAttempts) %>% 
+    ungroup() %>% 
+    ggplot(aes(x = reorder(Player ,TotalAttempts ,function(x) {x}) ,y = TotalAttempts)) +
+    geom_col() +
+    coord_flip() +
+    labs(x = "Player") +
+    theme_fivethirtyeight()      
+})
 
 
 
+```
 
 
+### Correct Streaks
+
+```{r}
+
+StreakData <- WordleData %>% 
+  # filter(Player %in% input$PlayerInput) %>% 
+  filter(!is.na(NumberofAttempts)) %>% 
+  mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,7.5 ,as.numeric(NumberofAttempts))
+         ,CorrectFlag  = if_else(NumberofAttempts == "X" ,0 ,1)
+        ) %>%
+  group_by(Player) %>% 
+  summarise(LongestWrongStreak    = max(rle(CorrectFlag)$lengths[rle(CorrectFlag)$values==0])
+            ,LongestCorrectStreak = max(rle(CorrectFlag)$lengths[rle(CorrectFlag)$values==1])
+            ,CurrentWrongStreak   = ifelse(rle(CorrectFlag)$values[length(rle(CorrectFlag)$values)]==0 ,rle(CorrectFlag)$lengths[rle(CorrectFlag)$values==0][length(rle(CorrectFlag)$lengths[rle(CorrectFlag)$values==0])] ,0)
+            ,CurrentCorrectStreak = ifelse(rle(CorrectFlag)$values[length(rle(CorrectFlag)$values)]==1 ,rle(CorrectFlag)$lengths[rle(CorrectFlag)$values==1][length(rle(CorrectFlag)$lengths[rle(CorrectFlag)$values==1])] ,0)
+            ) %>% 
+  ungroup() %>% 
+  pivot_longer(LongestWrongStreak:CurrentCorrectStreak 
+               ,names_to = "StreakType"
+               ,values_to = "Streak"
+               ) %>% 
+  mutate(LengthType  = if_else(str_detect(StreakType ,pattern = "^Long") ,"Longest" ,"Current")
+         ,ResultType = if_else(str_detect(StreakType ,pattern = "Correct") ,"Correct" ,"Wrong")
+        )
+
+CorrectStreakLevels <- StreakData %>% 
+  filter(LengthType == "Longest" & ResultType == "Correct") %>% 
+  arrange(desc(Streak)) %>% 
+  select(Player) %>% 
+  pull()
+
+StreakData$Player <- factor(StreakData$Player ,levels = rev(CorrectStreakLevels))
+StreakData$LengthType <- factor(StreakData$LengthType ,levels = c("Longest" ,"Current"))
+
+renderPlot({
+  StreakData %>% 
+    filter(ResultType == "Correct") %>% 
+    ggplot(aes(x = Player ,y = Streak ,fill = Streak)) +
+      geom_col() +
+      coord_flip() +
+      facet_wrap(. ~ LengthType) +
+      scale_y_continuous(breaks = pretty_breaks()) +
+      labs(x = "Player") +
+      scale_fill_gradientn(colors = c("darkred", "tomato1","palegreen", "darkgreen")) +    
+      theme_fivethirtyeight() 
+})
+  
+
+
+```
+
+
+Player Summary 
+=======================================================================
+
+Column {data-width=200 .sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+TopPlayer <- WordleData %>% 
+  mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,7.5 ,as.numeric(NumberofAttempts))) %>%
+  group_by(Player) %>% 
+  summarise(AvgAttempts = mean(AttemptsClean ,na.rm = TRUE)) %>% 
+  arrange(AvgAttempts) %>% 
+  slice(1) %>% 
+  select(Player) %>% 
+  pull()
+  
+
+selectInput("PlayerSelection"
+            ,"Select player:"
+            ,choices = PlayerVector
+            ,selected = TopPlayer
+            )
+
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### Guess Distribution
+
+```{r}
+
+WordleDistribution <- WordleData
+
+WordleDistribution$NumberofAttempts <- factor(WordleDistribution$NumberofAttempts ,levels = c("X" ,6:1))
+
+renderPlot({
+  WordleDistribution %>% 
+    filter(Player == input$PlayerSelection) %>% 
+    filter(!is.na(NumberofAttempts)) %>% 
+    ggplot(aes(x = NumberofAttempts ,fill = NumberofAttempts)) +
+      scale_x_discrete(drop = FALSE) +  
+      geom_bar() +
+      coord_flip() +
+      scale_fill_manual(values = c("1" = "gold"
+                                  ,"2" = "springgreen4"
+                                  ,"3" = "palegreen"
+                                  ,"4" = "whitesmoke"
+                                  ,"5" = "tomato1"
+                                  ,"6" = "darkred"
+                                  ,"X" = "black"
+                                  )
+                       ) +      
+      labs(x = "Attempts") +
+      theme_fivethirtyeight() +
+      theme(legend.position = "none") 
+})
+
+
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### Wordle History
+
+```{r}
+
+```
 
 
 
