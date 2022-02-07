@@ -276,7 +276,7 @@ renderPlot({
       scale_fill_manual(values = c("1" = "gold"
                                   ,"2" = "springgreen4"
                                   ,"3" = "palegreen"
-                                  ,"4" = "whitesmoke"
+                                  ,"4" = "#DFECDF"
                                   ,"5" = "tomato1"
                                   ,"6" = "darkred"
                                   ,"X" = "black"
