@@ -41,7 +41,7 @@ Column {data-width=200 .sidebar}
 
 ```{r include=FALSE}
 
-WordleData <- read_xlsx("Wordle Tracking.xlsx" ,sheet = "Results")
+WordleData <- read_xlsx("Wordle Tracking.xlsm" ,sheet = "Results")
 
 colnames(WordleData) <- str_remove_all(colnames(WordleData) ,pattern = "\\s")
 
@@ -94,8 +94,7 @@ renderPlot({
     geom_col() +
     coord_flip() +
     labs(x = "Player") +
-    scale_fill_gradientn(colors = c("darkgreen" ,"palegreen" ,"tomato1" ,"darkred")
-                         ,breaks = c(4 ,4.4 ,4.8)) +    
+    scale_fill_gradientn(colors = c("darkgreen" ,"palegreen" ,"tomato1" ,"darkred")) +    
     theme_fivethirtyeight()
 })
 
@@ -272,6 +271,7 @@ renderPlot({
     ggplot(aes(x = NumberofAttempts ,fill = NumberofAttempts)) +
       scale_x_discrete(drop = FALSE) +  
       geom_bar() +
+      scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))) +
       coord_flip() +
       scale_fill_manual(values = c("1" = "gold"
                                   ,"2" = "springgreen4"
@@ -356,6 +356,8 @@ renderDataTable({
               ,options = list(scrollY = '1000px'
                               ,paging = FALSE
                               ,scrollX = TRUE
+                              ,columnDefs = list(list(className = 'dt-center' 
+                                                      ,targets = 0:length(PlayerVector)+2))
                               )
               )
 })
