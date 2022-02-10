@@ -41,7 +41,7 @@ Column {data-width=200 .sidebar}
 
 ```{r include=FALSE}
 
-WordleData <- read_xlsx("Wordle Tracking.xlsx" ,sheet = "Results")
+WordleData <- read_xlsx("Wordle Tracking.xlsm" ,sheet = "Results")
 
 colnames(WordleData) <- str_remove_all(colnames(WordleData) ,pattern = "\\s")
 
@@ -94,8 +94,7 @@ renderPlot({
     geom_col() +
     coord_flip() +
     labs(x = "Player") +
-    scale_fill_gradientn(colors = c("darkgreen" ,"palegreen" ,"tomato1" ,"darkred")
-                         ,breaks = c(4 ,4.4 ,4.8)) +    
+    scale_fill_gradientn(colors = c("darkgreen" ,"palegreen" ,"tomato1" ,"darkred")) +    
     theme_fivethirtyeight()
 })
 
@@ -248,7 +247,7 @@ TopPlayer <- WordleData %>%
 
 selectInput("PlayerSelection"
             ,"Select player:"
-            ,choices = PlayerVector
+            ,choices = sort(PlayerVector)
             ,selected = TopPlayer
             )
 
@@ -272,6 +271,7 @@ renderPlot({
     ggplot(aes(x = NumberofAttempts ,fill = NumberofAttempts)) +
       scale_x_discrete(drop = FALSE) +  
       geom_bar() +
+      scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))) +
       coord_flip() +
       scale_fill_manual(values = c("1" = "gold"
                                   ,"2" = "springgreen4"
@@ -293,16 +293,76 @@ renderPlot({
 Column {data-width=450}
 -----------------------------------------------------------------------
 
-### Wordle History
+### Wins
 
 ```{r}
+
+
 
 ```
 
 
+Wordle History 
+=======================================================================
+
+Column {data-width=200 .sidebar}
+-----------------------------------------------------------------------
+
+### Filters
+
+```{r}
+
+selectInput("XInput2"
+            ,"Select a value for X:"
+            ,choices = c(7, 7.5 ,8 ,8.5 ,9)
+            ,selected = 7.5
+            )
 
 
+selectInput("ShowWordles"
+            ,"Would you like the wordles to be shown?"
+            ,choices = c("Yes" ,"No")
+            ,selected = "No"
+            )
 
+```
+
+Column {data-width=800}
+-----------------------------------------------------------------------
+
+### History
+
+```{r}
+
+renderDataTable({
+  WordleData %>%
+    mutate(AttemptsClean = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput2) ,as.numeric(NumberofAttempts))
+           ) %>%
+    group_by(WordleId ,Word) %>%
+    summarise(NumberofAttempts = mean(AttemptsClean ,na.rm = TRUE)) %>%
+    ungroup() %>%
+    mutate(Player            = "Average"
+           ,NumberofAttempts = as.character(round(NumberofAttempts ,2))) %>%
+    bind_rows(WordleData %>% select(WordleId ,Word ,NumberofAttempts ,Player)) %>%
+    mutate(Player2 = factor(Player ,levels = c(sort(PlayerVector) ,"Average"))
+           ,Word   = case_when(input$ShowWordles == "No" ~ "?????"
+                               ,input$ShowWordles == "Yes" ~ Word)
+           ) %>%
+    arrange(WordleId ,Player2) %>%
+    select(-Player2) %>%
+    pivot_wider(names_from = Player ,values_from = NumberofAttempts) %>%
+    arrange(desc(WordleId)) %>%
+    datatable(rownames = FALSE
+              ,options = list(scrollY = '1000px'
+                              ,paging = FALSE
+                              ,scrollX = TRUE
+                              ,columnDefs = list(list(className = 'dt-center' 
+                                                      ,targets = 0:length(PlayerVector)+2))
+                              )
+              )
+})
+
+```
 
 
 
