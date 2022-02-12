@@ -5,8 +5,8 @@ account: robdaslob
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5625448
-bundleId: 5565541
+bundleId: 5572615
 url: https://robdaslob.shinyapps.io/wordle/
-when: 1644512285.1618
+when: 1644687909.2286
 asMultiple: FALSE
 asStatic: FALSE

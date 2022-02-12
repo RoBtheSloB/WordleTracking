@@ -43,12 +43,19 @@ Column {data-width=200 .sidebar}
 
 WordleData <- read_xlsx("Wordle Tracking.xlsm" ,sheet = "Results")
 
+ExcludedPlayers <- c("Aimee")
+
+WordleData <- WordleData %>% 
+  filter(!(Player %in% ExcludedPlayers))
+
 colnames(WordleData) <- str_remove_all(colnames(WordleData) ,pattern = "\\s")
 
 PlayerVector <- WordleData %>%
   select(Player) %>% 
   unique() %>% 
   pull()
+
+
 
 
 ```
