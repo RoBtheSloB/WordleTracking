@@ -258,6 +258,12 @@ selectInput("PlayerSelection"
             ,selected = TopPlayer
             )
 
+selectInput("XInput3"
+            ,"Select a value for X:"
+            ,choices = c(7, 7.5 ,8 ,8.5 ,9)
+            ,selected = 7.5
+            )
+
 ```
 
 Column {data-width=450}
@@ -300,9 +306,92 @@ renderPlot({
 Column {data-width=450}
 -----------------------------------------------------------------------
 
-### Wins
+### Attempt Difference by Opponent
 
 ```{r}
+
+renderPlot({
+
+  AllOtherPlayers <- WordleData %>% 
+    filter(Player != input$PlayerSelection) %>% 
+    pivot_wider(names_from = Player ,values_from = NumberofAttempts)
+  
+  OpponentData <- WordleData %>% 
+    left_join(AllOtherPlayers ,by = c("Date" ,"WordleId" ,"Word")) %>%
+    pivot_longer(cols = -c(Date:NumberofAttempts) ,names_to = "Opponent" ,values_to = "OpponentAttempts") %>% 
+    filter(!is.na(OpponentAttempts)) %>% 
+    mutate(AttemptsClean          = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput3) ,as.numeric(NumberofAttempts))
+          ,OpponentAttemptsClean  = if_else(OpponentAttempts == "X" ,as.numeric(input$XInput3) ,as.numeric(OpponentAttempts))
+          ,Difference             = OpponentAttemptsClean - AttemptsClean
+          ) %>% 
+    group_by(Player ,Opponent) %>% 
+    summarise(Difference = sum(Difference ,na.rm = TRUE)) %>% 
+    ungroup() %>% 
+    filter(Player != Opponent)
+  
+  MinDifference <- min(OpponentData$Difference)
+  MaxDifference <- max(OpponentData$Difference)
+  
+  OpponentData %>%   
+    filter(Player == input$PlayerSelection) %>% 
+    ggplot(aes(x = reorder(Opponent ,Difference ,FUN = function(x) {x}) ,y = Difference ,fill = Difference)) +
+      geom_col() +
+      coord_flip() +
+      scale_y_continuous(breaks = pretty_breaks()) +
+      scale_fill_gradientn(colors  = c("darkred", "tomato1","palegreen", "darkgreen")
+                           ,limits = c(MinDifference ,MaxDifference)) +
+      theme_fivethirtyeight()
+})
+
+
+```
+
+### Days Won - Days Lost by Opponent
+
+```{r}
+
+renderPlot({
+
+  AllOtherPlayers2 <- WordleData %>% 
+    filter(Player != input$PlayerSelection) %>% 
+    pivot_wider(names_from = Player ,values_from = NumberofAttempts)
+  
+  OpponentData2 <- WordleData %>% 
+    left_join(AllOtherPlayers2 ,by = c("Date" ,"WordleId" ,"Word")) %>%
+    pivot_longer(cols = -c(Date:NumberofAttempts) ,names_to = "Opponent" ,values_to = "OpponentAttempts") %>% 
+    filter(!is.na(OpponentAttempts)) %>% 
+    mutate(AttemptsClean          = if_else(NumberofAttempts == "X" ,as.numeric(input$XInput3) ,as.numeric(NumberofAttempts))
+          ,OpponentAttemptsClean  = if_else(OpponentAttempts == "X" ,as.numeric(input$XInput3) ,as.numeric(OpponentAttempts))
+          ,Difference             = OpponentAttemptsClean - AttemptsClean
+          ,Wins                   = as.numeric(AttemptsClean < OpponentAttemptsClean)
+          ,Losses                 = as.numeric(AttemptsClean > OpponentAttemptsClean)
+          ,Counter                = as.numeric(AttemptsClean != OpponentAttemptsClean)
+          ,WinsMinusLosses        = Wins - Losses
+          ) %>% 
+    group_by(Player ,Opponent) %>% 
+    summarise(Difference            = sum(Difference ,na.rm = TRUE)
+              ,TotalWins            = sum(Wins ,na.rm = TRUE)
+              ,TotalCounter         = sum(Counter ,na.rm = TRUE)
+              ,TotalWinsMinusLosses = sum(WinsMinusLosses ,na.rm = TRUE)
+              ,WinPercent           = TotalWins / TotalCounter
+              ) %>% 
+    ungroup() %>% 
+    filter(Player != Opponent)
+  
+  MinWinsMinusLosses <- min(OpponentData2$TotalWinsMinusLosses)
+  MaxWinsMinusLosses <- max(OpponentData2$TotalWinsMinusLosses)  
+  
+  OpponentData2 %>%   
+    filter(Player == input$PlayerSelection) %>% 
+    ggplot(aes(x = reorder(Opponent ,TotalWinsMinusLosses ,FUN = function(x) {x}) ,y = TotalWinsMinusLosses ,fill = TotalWinsMinusLosses)) +
+      geom_col() +
+      coord_flip() +
+      scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))) +
+      scale_fill_gradientn(colors  = c("darkred", "tomato1","palegreen", "darkgreen")
+                           ,limits = c(MinWinsMinusLosses ,MaxWinsMinusLosses)
+                           ) +
+      theme_fivethirtyeight()
+})
 
 
 
