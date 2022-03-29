@@ -43,7 +43,7 @@ Column {data-width=200 .sidebar}
 
 WordleData <- read_xlsx("Wordle Tracking.xlsm" ,sheet = "Results")
 
-ExcludedPlayers <- c("Aimee" ,"Henry")
+ExcludedPlayers <- c("Aimee" ,"Henry" ,"Taylor" ,"Carly")
 
 WordleData <- WordleData %>% 
   filter(!(Player %in% ExcludedPlayers))
