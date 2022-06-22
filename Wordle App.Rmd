@@ -41,7 +41,14 @@ Column {data-width=200 .sidebar}
 
 ```{r include=FALSE}
 
-WordleData <- read_xlsx("Wordle Tracking.xlsm" ,sheet = "Results")
+SpreadData <- read_xlsx("Wordle Tracking v2.xlsx" ,sheet = "Data")
+
+WordleData <- SpreadData %>% 
+  mutate_at(vars(Phil ,Erik ,RoBert ,Andrew ,Yoyo ,Henry ,Aimee ,Taylor ,Carly)
+            ,as.character
+            ) %>% 
+  pivot_longer(names_to = "Player" ,values_to = "Number of Attempts" ,-c(Date ,`Wordle Id` ,Word))
+
 
 ExcludedPlayers <- c("Henry" ,"Taylor" ,"Carly")
 
